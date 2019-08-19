@@ -20,12 +20,12 @@ def read_data(snr):
                                                         output_data.T,
                                                         test_size=test_rate)
     
-    return x_train.values, x_test.valus, y_train.values, y_test.values
+    return x_train.values, x_test.values, y_train.values, y_test.values
   
 INPUT_NODE = 16  # 输入节点
 OUTPUT_NODE = 16  # 输出节点
 BATCH_SIZE = 200  # 一批多少数据
-EPOCHS = 50  # 过多少次数据
+EPOCHS = 20  # 过多少次数据
 LEARNING_RATE_BASE = 0.001  # 基本学习率
 STAIRCASE = True   # 学习率衰减阶梯状衰减
 DROP_OUT = 0.3  # dropout率
@@ -124,11 +124,11 @@ for snr in SNR:
     
     X_train, X_test, Y_train, Y_test = read_data(snr)
 
-    tf.global_variables_initializer().run()  # 初始化
+    sess.run(tf.global_variables_initializer())  # 初始化
     for epoch in range(EPOCHS):
         for i in range(data_num // BATCH_SIZE):
             # 设置批次
-            start = (i * BATCH_SIZE) % data_num
+            start = int((i * BATCH_SIZE) % data_num)
             end = min(start + BATCH_SIZE, data_num)
             
             _ = sess.run(train_step,
@@ -137,7 +137,7 @@ for snr in SNR:
             train_loss = sess.run(loss,
                                   feed_dict={x: X_train[start:end], y_: Y_train[start:end]})
             
-            test_start = data_num * (1-test_rate)
+            test_start = int(data_num * (1-test_rate))
             
             if start >= test_start:
                 test_loss = sess.run(loss,
@@ -146,23 +146,34 @@ for snr in SNR:
             
             if i % 100 == 0:
                 if start >= test_start:
-                    print('snr：%d, epoch %d, train %d, error_num %d, 训练集损失%.12f,测试集损失%.12f' % (snr*10,
-                                                                                                      epoch,
-                                                                                                      i,
-                                                                                                      sess.run(error_num),
-                                                                                                      train_loss,
-                                                                                                      test_loss))
+                    print('snr：%d, '
+                          'epoch %d, '
+                          'train %d, '
+                          'error_num %d, '
+                          '训练集损失%.12f,'
+                          '测试集损失%.12f' % (snr*10,
+                                          epoch,
+                                          i,
+                                          sess.run(error_num, feed_dict={x: X_test[start - test_start:end - test_start],
+                                                                         y_: Y_test[start-test_start:end-test_start]}),
+                                          train_loss,
+                                          test_loss))
                     train_loss_snr.append(train_loss)
                     test_loss_snr.append(test_loss)
                 else:
-                    print('snr：%d,epoch %d, train %d, error_num %d, 训练集损失%.12f' % (snr*10,
-                                                                                       epoch,
-                                                                                       i,
-                                                                                       sess.run(error_num),
-                                                                                       train_loss))
+                    print('snr：%d,'
+                          'epoch %d, '
+                          'train %d, '
+                          'error_num %d, '
+                          '训练集损失%.12f' % (snr*10,
+                                          epoch,
+                                          i,
+                                          sess.run(error_num, feed_dict={x: X_train[start:end], y_: Y_train[start:end]}),
+                                          train_loss))
                     train_loss_snr.append(train_loss)
     time_end = time.time()
     print('训练一个snr所用时间:%.2f'%(time_end-time_start))
+    del(X_train, X_test, Y_train, Y_test)
     time_list.append(time_end - time_start)
     train_loss_list.append(train_loss_snr)
     test_loss_list.append(test_loss_snr)
@@ -182,15 +193,26 @@ plt.show()
 
 pd.DataFrame(data=train_loss_list, index=SNR).T.plot()
 plt.title('Train loss')
+plt.grid()
+plt.xlabel('SNR')
+plt.xticks(SNR)
+plt.ylabel('loss')
 plt.savefig('./train_loss' + '%s'%(time.strftime('%d_%H_%M')) + '.jpg')
 plt.show()
 
 pd.DataFrame(data=test_loss_list, index=SNR).T.plot()
 plt.title('Test loss')
+plt.grid()
+plt.xlabel('SNR')
+plt.xticks(SNR)
+plt.ylabel('loss')
 plt.savefig('./test_loss' + '%s'%(time.strftime('%d_%H_%M')) + '.jpg')
 plt.show()
 
-pd.DataFrame(data=time_list, index=SNR).T.plot()
+pd.Series(data=time_list, index=SNR).plot()
 plt.title('time using')
+plt.grid()
+plt.xlabel('SNR')
+plt.ylabel('time/s')
 plt.savefig('./time_use' + '%s'%(time.strftime('%d_%H_%M')) + '.jpg')
 plt.show()
