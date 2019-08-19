@@ -92,7 +92,7 @@ loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=y,
 
 # loss = - tf.reduce_mean(y_ * tf.log(tf.clip_by_value(y, 1e-8, 1e2)))
 
-error_num = tf.reduce_mean(tf.cast(tf.equal(tf.argmax(y, 1), tf.argmax(y_, 1)), dtype=tf.int32))
+error_num = tf.reduce_mean(tf.cast(tf.not_equal(tf.argmax(y, 1), tf.argmax(y_, 1)), dtype=tf.float32))
 
 # 优化器
 # 定义当前迭代轮数的变量
@@ -109,7 +109,7 @@ learning_rate = tf.train.exponential_decay(LEARNING_RATE_BASE,
                                            staircase=STAIRCASE)
 
 # 定义优化函数
-train_step = tf.train.AdamOptimizer(LEARNING_RATE_BASE).minimize(loss, global_step)
+train_step = tf.train.AdamOptimizer(learning_rate).minimize(loss, global_step)
 
 # history_list = []
 # time_use = []
@@ -176,13 +176,13 @@ for snr in SNR:
                     print('snr：%d, '
                           'epoch %d, '
                           'train %d, '
-                          'error_num %d, '
+                          'error_num %12f, '
                           '训练集损失%.12f,'
                           '测试集损失%.12f' % (snr*10,
                                           epoch,
                                           i,
-                                          sess.run(error_num, feed_dict={x: X_test[start - test_start:end - test_start],
-                                                                         y_: Y_test[start-test_start:end-test_start]}),
+                                          sess.run(error_num, feed_dict={x: X_test[start - test_start:],
+                                                                         y_: Y_test[start - test_start:]}),
                                           train_loss,
                                           test_loss))
                     train_loss_snr.append(train_loss)
@@ -191,7 +191,7 @@ for snr in SNR:
                     print('snr：%d,'
                           'epoch %d, '
                           'train %d, '
-                          'error_num %d, '
+                          'error_num %f, '
                           '训练集损失%.12f' % (snr*10,
                                           epoch,
                                           i,
