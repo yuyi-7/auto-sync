@@ -49,17 +49,17 @@ y_ = tf.placeholder(tf.float32, shape=(None, OUTPUT_NODE))
 
 layer1 = keras.layers.Dense(128, activation='relu')(x)
 
-layer1_dropout = keras.layers.Dropout(DROP_OUT)(layer1)
+layer1 = keras.layers.Dropout(DROP_OUT)(layer1)
 
-layer2 = keras.layers.Dense(256, activation='relu')(layer1_dropout)
+layer2 = keras.layers.Dense(256, activation='relu')(layer1)
 
-layer2_dropout = keras.layers.Dropout(DROP_OUT)(layer2)
+layer2 = keras.layers.Dropout(DROP_OUT)(layer2)
 
-layer3 = keras.layers.Dense(128, activation='relu')(layer2_dropout)
+layer3 = keras.layers.Dense(128, activation='relu')(layer2)
 
-layer3_dropout = keras.layers.Dropout(DROP_OUT)(layer3)
+layer3 = keras.layers.Dropout(DROP_OUT)(layer3)
 
-y = keras.layers.Dense(OUTPUT_NODE)(layer3_dropout)
+y = keras.layers.Dense(OUTPUT_NODE)(layer3)
 
 # model = keras.models.Sequential()
 # model.add(keras.layers.normalization.BatchNormalization(input_shape=(INPUT_NODE,)))
@@ -79,8 +79,8 @@ y = keras.layers.Dense(OUTPUT_NODE)(layer3_dropout)
 #               optimizer=keras.optimizers.Adam(LEARNING_RATE, beta_1=0.9, beta_2=0.999, epsilon=1e-08),
 #               metrics=['accuracy', error_num])
 
-loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y,
-                                                              logits=y_))
+loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=y_,
+                                                                 logits=y))
 
 error_num = tf.reduce_sum(tf.square(y - y_)) / 2 / BATCH_SIZE
 
