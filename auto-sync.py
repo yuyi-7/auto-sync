@@ -10,18 +10,10 @@ from sklearn.model_selection import train_test_split
 from matplotlib import pyplot as plt
 import os
 import time
+from utils import *
 
-def read_data(snr):
-    # 读取数据
-    input_data = pd.read_csv(os.path.join('data', 'input%d.csv' % snr), header=None)
-    output_data = pd.read_csv(os.path.join('data', 'output%d.csv' % snr), header=None)
 
-    x_train, x_test, y_train, y_test = train_test_split(input_data.T,
-                                                        output_data.T,
-                                                        test_size=test_rate)
-    
-    return x_train.values, x_test.values, y_train.values, y_test.values
-  
+
 INPUT_NODE = 16  # 输入节点
 OUTPUT_NODE = 16  # 输出节点
 BATCH_SIZE = 200  # 一批多少数据
@@ -92,7 +84,7 @@ loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=y,
 
 # loss = - tf.reduce_mean(y_ * tf.log(tf.clip_by_value(y, 1e-8, 1e2)))
 
-error_num = tf.reduce_mean(tf.cast(tf.equal(tf.argmax(y, 1), tf.argmax(y_, 1)), dtype=tf.int32))
+error_num = tf.reduce_mean(tf.cast(tf.not_equal(tf.argmax(y, 1), tf.argmax(y_, 1)), dtype=tf.float32))
 
 # 优化器
 # 定义当前迭代轮数的变量
@@ -109,7 +101,7 @@ learning_rate = tf.train.exponential_decay(LEARNING_RATE_BASE,
                                            staircase=STAIRCASE)
 
 # 定义优化函数
-train_step = tf.train.AdamOptimizer(LEARNING_RATE_BASE).minimize(loss, global_step)
+train_step = tf.train.AdamOptimizer(learning_rate).minimize(loss, global_step)
 
 # history_list = []
 # time_use = []
@@ -142,7 +134,8 @@ for snr in SNR:
     train_loss_snr = []
     test_loss_snr = []
 
-    X_train, X_test, Y_train, Y_test = read_data(snr)
+    # X_train, X_test, Y_train, Y_test = read_data(snr, test_rate)  # 读取失真数据
+    X_train, X_test, Y_train, Y_test = read_data_undistortion(snr, test_rate)
     # 保存开始时间
     time_start = time.time()
     sess.run(tf.global_variables_initializer())  # 初始化
@@ -176,13 +169,13 @@ for snr in SNR:
                     print('snr：%d, '
                           'epoch %d, '
                           'train %d, '
-                          'error_num %d, '
+                          'error_num %12f, '
                           '训练集损失%.12f,'
                           '测试集损失%.12f' % (snr*10,
                                           epoch,
                                           i,
-                                          sess.run(error_num, feed_dict={x: X_test[start - test_start:end - test_start],
-                                                                         y_: Y_test[start-test_start:end-test_start]}),
+                                          sess.run(error_num, feed_dict={x: X_test[start - test_start:],
+                                                                         y_: Y_test[start - test_start:]}),
                                           train_loss,
                                           test_loss))
                     train_loss_snr.append(train_loss)
@@ -191,7 +184,7 @@ for snr in SNR:
                     print('snr：%d,'
                           'epoch %d, '
                           'train %d, '
-                          'error_num %d, '
+                          'error_num %f, '
                           '训练集损失%.12f' % (snr*10,
                                           epoch,
                                           i,
