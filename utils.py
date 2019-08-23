@@ -28,4 +28,4 @@ def read_data_undistortion(snr, test_rate):
                                                         Y,
                                                         test_size=test_rate)
 
-    return x_train.values, x_test.values, y_train.values, y_test.values
+    return x_train, x_test, y_train, y_test
