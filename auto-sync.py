@@ -169,7 +169,7 @@ for snr in SNR:
                     print('snr：%d, '
                           'epoch %d, '
                           'train %d, '
-                          'error_num %12f, '
+                          'error_num %.12f, '
                           '训练集损失%.12f,'
                           '测试集损失%.12f' % (snr*10,
                                           epoch,
@@ -215,7 +215,7 @@ plt.ylabel('loss')
 plt.savefig('./test_loss/test_loss' + '%s'%(time.strftime('%d_%H_%M')) + '.jpg')
 plt.show()
 
-pd.Series(data=time_list, index=SNR).plot()
+pd.Series(data=time_list, index=[0,10,20,30,40]).plot()
 plt.title('time using')
 plt.grid()
 plt.xlabel('SNR')
