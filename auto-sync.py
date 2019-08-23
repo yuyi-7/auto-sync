@@ -14,7 +14,7 @@ from utils import *
 
 
 
-INPUT_NODE = 16  # 输入节点
+INPUT_NODE = 64  # 输入节点
 OUTPUT_NODE = 16  # 输出节点
 BATCH_SIZE = 200  # 一批多少数据
 EPOCHS = 20  # 过多少次数据
